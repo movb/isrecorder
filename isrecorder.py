@@ -106,6 +106,7 @@ def record_session(url, output_folder, session_name):
     session = DataBase.get_session()()
     meta = session.query(Meta).first()
     meta.stop = datetime.utcnow()
+    print("Record length {0}".format(meta.stop - meta.start))
     session.commit()
 
 
