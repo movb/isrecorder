@@ -8,7 +8,6 @@ import shutil
 from os import listdir, makedirs
 from os.path import isdir, join, dirname, exists
 import signal
-import sys
 from datetime import datetime
 
 DataBase = None
@@ -19,31 +18,29 @@ def signal_handler(signal, frame):
     global stop_flag
     stop_flag = True
     print('Stopped by Ctrl+C!')
-    #sys.exit(0)
 
 
 def DEBUG(*args):
-    debug = True
+    debug = False
     if debug:
         print(args)
 
 
-def save_segments(segments, baseurl, session, outpath):
-    DEBUG('save segments: segments = {0}, outpath = {1}'.format(segments, outpath))
+def save_segments(segments, base_url, session, out_path):
+    DEBUG('save segments: segments = {0}, out_path = {1}'.format(segments, out_path))
+    out_path = join(out_path, 'chunks')
     for segment in segments:
         segment_name = get_path_from_url(segment)
         DEBUG('segment_name {0}'.format(segment_name))
         if session.query(Segment).filter(Segment.name == segment_name).first():
-            return
-        r = requests.get(make_full_url(segment, baseurl))
+            continue
+        r = requests.get(make_full_url(segment, base_url), stream=True)
         if r.status_code == 200:
-            dir = join(outpath, dirname(get_path_from_url(segment)))
-            DEBUG('dir {0}'.format(dir))
-            filename = join(outpath, get_path_from_url(segment))
+            dir = join(out_path, dirname(get_path_from_url(segment)))
+            filename = join(out_path, get_path_from_url(segment))
             if not exists(dir):
                 makedirs(dir)
             with open(filename, 'wb') as f:
-                r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
             segment_file = Segment(segment_name, get_path_from_url(segment), r.reason, r.status_code)
             session.add(segment_file)
@@ -52,22 +49,23 @@ def save_segments(segments, baseurl, session, outpath):
 
 
 
-def save_streams(streams, baseurl, session, outpath):
-    DEBUG('save streams: streams = {0}, outpath = {1}'.format(streams, outpath))
+def save_streams(streams, base_url, session, out_path):
+    DEBUG('save streams: streams = {0}, outpath = {1}'.format(streams, out_path))
     for stream in streams:
-        r = requests.get(make_full_url(stream, baseurl))
+        r = requests.get(make_full_url(stream, base_url))
         playlist_name = get_path_from_url(stream)
         body = r.text
         body = remove_sessions(body)
         sp = session.query(SimplePlaylist).filter(SimplePlaylist.name == get_path_from_url(stream))\
             .order_by(SimplePlaylist.date.desc()).first()
         if sp and sp.body == body:
+            print 'PLAYLIST NOT CHANGED'
             return
         simple_pl = SimplePlaylist(playlist_name, body, r.reason, r.status_code)
         session.add(simple_pl)
 
         segments = get_streams(body)
-        save_segments(segments, baseurl, session, outpath)
+        save_segments(segments, base_url, session, out_path)
 
 
 @setInterval(.5)
