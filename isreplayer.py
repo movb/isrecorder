@@ -91,6 +91,7 @@ if __name__ == '__main__':
     conf = {
         'global': {
             'server.socket_port': 9090,
+            'server.socket_host': '0.0.0.0',
             'tools.trailing_slash.on': False,
             'tools.trailing_slash.extra': False,
             'tools.trailing_slash.missing': False
