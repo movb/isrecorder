@@ -59,7 +59,6 @@ def save_streams(streams, base_url, session, out_path):
         sp = session.query(SimplePlaylist).filter(SimplePlaylist.name == get_path_from_url(stream))\
             .order_by(SimplePlaylist.date.desc()).first()
         if sp and sp.body == body:
-            print 'PLAYLIST NOT CHANGED'
             return
         simple_pl = SimplePlaylist(playlist_name, body, r.reason, r.status_code)
         session.add(simple_pl)
@@ -137,6 +136,8 @@ def main():
     output = "{0}/{1}".format(output_folder, session_name)
     if not exists(output):
         makedirs(output)
+
+    print('Start recording session {0} to {1}'.format(session_name, output_folder))
     record_session(args.url, output, session_name)
 
 if __name__ == "__main__":
