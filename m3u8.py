@@ -46,3 +46,24 @@ def get_path_from_url(url):
         return p_url.path[1:]
     else:
         return p_url.path
+
+
+def playlist_remove_absolute_paths(playlist):
+    lines = []
+    for x in playlist.splitlines():
+        if x.find('#') != 0:
+            p = urlparse(x)
+            lines.append(p.path)
+        else:
+            lines.append(x)
+    return '\n'.join(lines)
+
+
+def playlist_prepend_path(playlist, path):
+    lines = []
+    for x in playlist.splitlines():
+        if x.find('#') != 0:
+            lines.append(path + x)
+        else:
+            lines.append(x)
+    return '\n'.join(lines)
