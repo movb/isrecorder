@@ -1,6 +1,7 @@
 __author__ = 'mike'
 
 import re
+import requests
 from urlparse import urlparse
 from urlparse import urljoin
 
@@ -64,6 +65,30 @@ def playlist_prepend_path(playlist, path):
     for x in playlist.splitlines():
         if x.find('#') != 0:
             lines.append(path + x)
+        else:
+            lines.append(x)
+    return '\n'.join(lines)
+
+
+def playlist_get_keys(playlist):
+    keys = []
+    for x in playlist.splitlines():
+        if x.find('#EXT-X-KEY') == 0:
+            m = re.search('URI="(.*)"', x)
+            url = m.group(1)
+            r = requests.get(url)
+            if r.status_code == 200:
+                p = urlparse(remove_sessions(url))
+                keys.append((p.path+'?'+p.query, r.text))
+    return keys
+
+
+def playlist_replace_keys(playlist, base):
+    lines = []
+    for x in playlist.splitlines():
+        if x.find('#EXT-X-KEY') == 0:
+            str = re.sub('(URI=")http[s]?://([^/]+)(.*")', r'\g<1>http://'+base+r'/key\g<3>', x)
+            lines.append(str)
         else:
             lines.append(x)
     return '\n'.join(lines)

@@ -26,6 +26,16 @@ def DEBUG(*args):
         print(args)
 
 
+def save_keys(body, session):
+    keys = playlist_get_keys(body)
+    for path, data in keys:
+        if session.query(Key).filter(Key.path == path).first():
+            continue
+        else:
+            key = Key(path, data)
+            session.add(key)
+
+
 def save_segments(segments, base_url, session, out_path):
     DEBUG('save segments: segments = {0}, out_path = {1}'.format(segments, out_path))
     out_path = join(out_path, 'chunks')
@@ -55,6 +65,7 @@ def save_streams(streams, base_url, session, out_path):
         r = requests.get(make_full_url(stream, base_url))
         playlist_name = get_path_from_url(stream)
         body = r.text
+        save_keys(body, session)
         body = remove_sessions(body)
         sp = session.query(SimplePlaylist).filter(SimplePlaylist.name == get_path_from_url(stream))\
             .order_by(SimplePlaylist.date.desc()).first()
@@ -73,8 +84,7 @@ def dump(url, output_folder):
     r = requests.get(url)
     session = DataBase.get_session()()
     body = r.text
-    body = remove_sessions(body)
-    main_pl = MainPlaylist(body, r.reason, r.status_code)
+    main_pl = MainPlaylist(remove_sessions(body), r.reason, r.status_code)
     session.add(main_pl)
 
     if is_playlist(body):

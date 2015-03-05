@@ -8,11 +8,22 @@ from cherrypy.lib.static import serve_file
 from db import *
 from models import *
 from m3u8 import *
-from datetime import datetime
+from datetime import datetime, timedelta
 
 DataBase = None
 session_folder = None
 start_time = datetime.utcnow()
+
+
+class Keys(object):
+    def _cp_dispatch(self, vpath):
+        cherrypy.request.params['name'] = '/'+'/'.join(vpath) + '?' + cherrypy.request.query_string
+        del vpath[:]
+        return self
+
+    @cherrypy.expose
+    def index(self, name=None, **params):
+        return get_key(name)
 
 
 class Chunks(object):
@@ -33,13 +44,22 @@ class Chunks(object):
 @cherrypy.popargs('name')
 class Playlist(object):
     @cherrypy.expose
-    def index(self, name=None):
-        cherrypy.response.headers['Content-Type'] = 'audio/mpegurl'
-        if name == 'stream.m3u8':
-            return get_main_playlist()
+    def index(self, name=None, **params):
+        vpath = name.split('/')
+        if len(vpath) > 1 and vpath[0] == 'key':
+            return get_key('/'.join(vpath[1:]))
         else:
-            return get_internal_playlist(name)
-        return 'Requested playlist %s' % name
+            cherrypy.response.headers['Content-Type'] = 'audio/mpegurl'
+            if name == 'stream.m3u8':
+                return get_main_playlist()
+            else:
+                return get_internal_playlist(name)
+
+    @cherrypy.expose
+    def key(self, name=None, **args):
+        print "requested key", name
+        return get_key(name)
+
 
 
 def get_session_start_time():
@@ -60,7 +80,21 @@ def get_internal_playlist(name):
     session = DataBase.get_session()()
     pl = session.query(SimplePlaylist).filter(SimplePlaylist.name == name).filter(SimplePlaylist.date < related_time)\
         .order_by(SimplePlaylist.date.desc()).first()
-    return playlist_prepend_path(playlist_remove_absolute_paths(pl.body), '/chunks')
+    if pl:
+        host = cherrypy.request.headers['Host']
+        return playlist_prepend_path(playlist_remove_absolute_paths(
+            playlist_replace_keys(pl.body, host)), '/chunks')
+    else:
+        raise cherrypy.NotFound
+
+
+def get_key(path):
+    session = DataBase.get_session()()
+    key = session.query(Key).filter(Key.path == path).first()
+    if key:
+        return key.data
+    else:
+        raise cherrypy.NotFound()
 
 
 if __name__ == '__main__':
@@ -78,7 +112,7 @@ if __name__ == '__main__':
         folder = args.folder
 
     if args.offset:
-        start_time += args.offset
+        start_time -= timedelta(0,int(args.offset))
 
     session_folder = os.path.join(folder, args.session)
 
@@ -101,5 +135,6 @@ if __name__ == '__main__':
     cherrypy.config.update(conf)
     cherrypy.tree.mount(Playlist(), '/', app_conf)
     cherrypy.tree.mount(Chunks(os.path.join(os.path.abspath(folder), args.session, 'chunks')), '/chunks', app_conf)
+    cherrypy.tree.mount(Keys(), '/key', app_conf)
     cherrypy.engine.start()
     cherrypy.engine.block()

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, Text, Date, MetaData, ForeignKey, DateTime
+from sqlalchemy import Table, Column, Integer, String, Text, DateTime, Binary
 import datetime
 
 
@@ -73,3 +73,22 @@ class Segment(Base):
 
     def __repr__(self):
         return "<Segment('%s',' %s', '%s', '%s')>" % (self.name, self.path, self.error, self.error_code)
+
+
+class Key(Base):
+    __tablename__ = 'keys'
+    id = Column(Integer, primary_key=True)
+    path = Column(String)
+    date = Column(DateTime, default=datetime.datetime.utcnow)
+    data = Column(Binary)
+    error = Column(String)
+    error_code = Column(Integer)
+
+    def __init__(self, path, data, error="", error_code=200):
+        self.path = path
+        self.data = data
+        self.error = error
+        self.error_code = error_code
+
+    def __repr__(self):
+        return "<Key('%s',' %s', '%s', '%s')>" % (self.path, self.data, self.error, self.error_code)
