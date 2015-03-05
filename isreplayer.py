@@ -72,7 +72,7 @@ def get_main_playlist():
     related_time = (datetime.utcnow() - start_time) + get_session_start_time()
     session = DataBase.get_session()()
     pl = session.query(MainPlaylist).filter(MainPlaylist.date < related_time).order_by(MainPlaylist.date.desc()).first()
-    return playlist_remove_absolute_paths(pl.body)
+    return playlist_remove_absolute_paths(pl.body)+'\n'
 
 
 def get_internal_playlist(name):
@@ -83,7 +83,7 @@ def get_internal_playlist(name):
     if pl:
         host = cherrypy.request.headers['Host']
         return playlist_prepend_path(playlist_remove_absolute_paths(
-            playlist_replace_keys(pl.body, host)), '/chunks')
+            playlist_replace_keys(pl.body, host)), '/chunks')+'\n'
     else:
         raise cherrypy.NotFound
 
