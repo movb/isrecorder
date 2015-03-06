@@ -14,7 +14,7 @@ def find_time(max_time_delta, playlist_name):
     for x in session.query(SimplePlaylist).filter(SimplePlaylist.name == playlist_name).all():
         if prev_elem:
             if x.date - prev_elem.date > timedelta(0, max_time_delta):
-                print("Find time difference {0}".format(x.date - prev_elem.date))
+                print("Found time difference {0}".format(x.date - prev_elem.date))
                 print("{0} - {1}\n{2}".format(prev_elem.id, prev_elem.date, prev_elem.body))
                 print("-------------------------------------------------------------------")
                 print("{0} - {1}\n{2}\n".format(x.id, x.date, x.body))
