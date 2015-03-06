@@ -13,6 +13,8 @@ This project aims to help debug and reproduce errors of iStream video streaming 
 You need Git and python installed:
 
 ```sh
+$ pip install requests
+$ pip install sqlalchemy
 $ git clone http://gitlab.netris.ru/m.plekhanov/isrecorder.git
 ```
 
