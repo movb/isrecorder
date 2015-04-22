@@ -27,6 +27,10 @@ def DEBUG(*args):
         print(args)
 
 
+def ECHO(*args):
+    print(args)
+
+
 def save_segments(segments, base_url, saved_segments):
     for segment in segments:
         if segment not in saved_segments:
@@ -65,16 +69,25 @@ def load_channel(server, channel, pause, number):
     time.sleep(random.randrange(100)/10)
 
     while True:
-        r = requests.get(url)
-        body = r.text
+        try:
+            r = requests.get(url, timeout = 10)
+            body = r.text
 
-        if is_playlist(body):
-            if is_variant(body):
-                streams = get_streams(body)
-                #save only best quality
-                load_streams([streams[-1]], url, saved_segments)
-            else:
-                load_streams([url], url, saved_segments)
+            if is_playlist(body):
+                if is_variant(body):
+                    streams = get_streams(body)
+                    #save only best quality
+                    load_streams([streams[-1]], url, saved_segments)
+                else:
+                    load_streams([url], url, saved_segments)
+        except requests.exceptions.Timeout:
+            ECHO("Request timeout after 10 seconds, url={0}".format(url))
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except (RuntimeError, TypeError, NameError) as ex:
+            ECHO("Exception in thread #{0}".format(number), ex)
+        except:
+            ECHO("Unknown exception in #{0}".format(number))
 
         if stop_flag:
             break
