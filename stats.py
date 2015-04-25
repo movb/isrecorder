@@ -118,11 +118,11 @@ def check(l, port_playlist, port_chunks, ffmpegs, channels):
     sys_mem = psutil.virtual_memory().used / (1024*1024.0)
     istream = get_istream_info()
     if istream:
-        istream_cpu = istream.get_cpu_percent(interval=1)
-        istream_mem = istream.get_memory_info()[0] / (1024*1024.0)
-        istream_con_playlist = len([conn for conn in istream.get_connections()
+        istream_cpu = istream.cpu_percent(interval=1)
+        istream_mem = istream.memory_info()[0] / (1024*1024.0)
+        istream_con_playlist = len([conn for conn in istream.connections()
                                     if conn.laddr[1] == port_playlist and conn.status == psutil.CONN_ESTABLISHED])
-        istream_con_chunks =   len([conn for conn in istream.get_connections()
+        istream_con_chunks =   len([conn for conn in istream.connections()
                                     if conn.laddr[1] == port_chunks and conn.status == psutil.CONN_ESTABLISHED])
     else:
         istream_cpu = -1
