@@ -117,12 +117,18 @@ def check(l, port_playlist, port_chunks, ffmpegs, channels):
     sys_cpu = psutil.cpu_percent(interval=1)
     sys_mem = psutil.virtual_memory().used / (1024*1024.0)
     istream = get_istream_info()
-    istream_cpu = istream.get_cpu_percent(interval=1)
-    istream_mem = istream.get_memory_info()[0] / (1024*1024.0)
-    istream_con_playlist = len([conn for conn in istream.get_connections()
-                                if conn.laddr[1] == port_playlist and conn.status == psutil.CONN_ESTABLISHED])
-    istream_con_chunks =   len([conn for conn in istream.get_connections()
-                                if conn.laddr[1] == port_chunks and conn.status == psutil.CONN_ESTABLISHED])
+    if istream:
+        istream_cpu = istream.get_cpu_percent(interval=1)
+        istream_mem = istream.get_memory_info()[0] / (1024*1024.0)
+        istream_con_playlist = len([conn for conn in istream.get_connections()
+                                    if conn.laddr[1] == port_playlist and conn.status == psutil.CONN_ESTABLISHED])
+        istream_con_chunks =   len([conn for conn in istream.get_connections()
+                                    if conn.laddr[1] == port_chunks and conn.status == psutil.CONN_ESTABLISHED])
+    else:
+        istream_cpu = "NFND"
+        istream_mem = "NFND"
+        istream_con_playlist = "NFND"
+        istream_con_chunks = "NFND"
 
     output = "{0}\t{1:.2f}\t{2:.2f}\t{3:.2f}\t{4:.2f}\t{5}\t{6}".format(
         sys_time.strftime("%x %X"),
