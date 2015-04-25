@@ -53,6 +53,7 @@ def save_segment(segments, base_url):
     segment_name = get_path_from_url(segment)
     DEBUG('segment_name {0}'.format(segment_name))
     ch_start = time.time()
+
     try:
         r = requests.get(make_full_url(segment, base_url), stream=True)
         if r.status_code == 200:
@@ -64,8 +65,12 @@ def save_segment(segments, base_url):
         else:
             return "ERROR_"+str(r.status_code)
     except requests.exceptions.Timeout:
-        return "timeout", 0
+        return "timeout"
+    except:
+        return "except"
+
     ch_end = time.time()
+
     return ch_end - ch_start
 
 
@@ -81,6 +86,8 @@ def load_stream(stream, base_url):
         return pl_end-pl_start, save_segment(segments, base_url)
     except requests.exceptions.Timeout:
         return "timeout", 0
+    except:
+        return "except", 0
 
 
 def get_channel_response_time(url):
@@ -103,6 +110,8 @@ def get_channel_response_time(url):
             return pl_end-pl_start, intime, chtime
     except requests.exceptions.Timeout:
         return "timeout", 0, 0
+    except:
+        return "except", 0, 0
 
 
 def check(l, port_playlist, port_chunks, ffmpegs, channels):
@@ -135,7 +144,7 @@ def check(l, port_playlist, port_chunks, ffmpegs, channels):
     if channels:
         for channel in channels:
             pl1, pl2, ch = get_channel_response_time(channel)
-            output += "\t{0}\t{1}\t{2}".format(pl1, pl2, ch)
+            output += "\t{0:.2f}\t{1:.2f}\t{2:.2f}".format(pl1, pl2, ch)
 
     l.acquire()
     print(output)
