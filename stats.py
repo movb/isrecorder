@@ -38,7 +38,7 @@ def get_istream_info():
 def get_ffmpeg_info(grep_string):
     procs = []
     for proc in psutil.process_iter():
-        if proc.name().find("ffmpeg") != -1 and proc.cmdline().find(grep_string) != -1:
+        if proc.name().find("ffmpeg") != -1 and " ".join(proc.cmdline()).find(grep_string) != -1:
             procs.append(proc)
     return procs
 
