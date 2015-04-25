@@ -11,8 +11,6 @@ from m3u8 import *
 import shutil
 import time
 import datetime
-import random
-from subprocess import check_output
 from multiprocessing import Process, Lock
 import psutil
 
