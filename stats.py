@@ -69,7 +69,7 @@ def save_segment(segments, base_url):
 
     ch_end = time.time()
 
-    return ch_end - ch_start
+    return "{0:.2f}".format(ch_end-ch_start)
 
 
 def load_stream(stream, base_url):
@@ -81,7 +81,7 @@ def load_stream(stream, base_url):
         body = r.text
         pl_end = time.time()
         segments = get_streams(body)
-        return pl_end-pl_start, save_segment(segments, base_url)
+        return "{0:.2f}".format(pl_end-pl_start), save_segment(segments, base_url)
     except requests.exceptions.Timeout:
         return "timeout", 0
     except:
@@ -105,7 +105,7 @@ def get_channel_response_time(url):
             else:
                 load_url = url
             intime, chtime = load_stream(load_url, url)
-            return pl_end-pl_start, intime, chtime
+            return "{0:.2f}".format(pl_end-pl_start), intime, chtime
     except requests.exceptions.Timeout:
         return "timeout", 0, 0
     except:
@@ -125,10 +125,10 @@ def check(l, port_playlist, port_chunks, ffmpegs, channels):
         istream_con_chunks =   len([conn for conn in istream.get_connections()
                                     if conn.laddr[1] == port_chunks and conn.status == psutil.CONN_ESTABLISHED])
     else:
-        istream_cpu = "NFND"
-        istream_mem = "NFND"
-        istream_con_playlist = "NFND"
-        istream_con_chunks = "NFND"
+        istream_cpu = -1
+        istream_mem = -1
+        istream_con_playlist = -1
+        istream_con_chunks = -1
 
     output = "{0}\t{1:.2f}\t{2:.2f}\t{3:.2f}\t{4:.2f}\t{5}\t{6}".format(
         sys_time.strftime("%x %X"),
@@ -148,7 +148,7 @@ def check(l, port_playlist, port_chunks, ffmpegs, channels):
     if channels:
         for channel in channels:
             pl1, pl2, ch = get_channel_response_time(channel)
-            output += "\t{0:.2f}\t{1:.2f}\t{2:.2f}".format(pl1, pl2, ch)
+            output += "\t{0}\t{1}\t{2}".format(pl1, pl2, ch)
 
     l.acquire()
     print(output)
