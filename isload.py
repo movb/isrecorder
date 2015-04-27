@@ -100,7 +100,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='iStream stress testing tool.')
     parser.add_argument('address', help='iStream server address')
     parser.add_argument('channels', metavar='Channel', nargs='+',
-                   help='an integer for the accumulator')
+                   help='Channel\'s names to use')
     parser.add_argument('-t', '--threads', type=int, default=10, help='number of threads')
     parser.add_argument('-p', '--pause', type=int, default=7, help='pause between playlist reloads')
 
