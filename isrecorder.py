@@ -46,57 +46,66 @@ def save_segments(segments, base_url, session, out_path):
         DEBUG('segment_name {0}'.format(segment_name))
         if session.query(Segment).filter(Segment.name == segment_name).first():
             continue
-        r = requests.get(make_full_url(segment, base_url), stream=True)
-        if r.status_code == 200:
-            dir = join(out_path, dirname(get_path_from_url(segment)))
-            filename = join(out_path, get_path_from_url(segment))
-            if not exists(dir):
-                makedirs(dir)
-            with open(filename, 'wb') as f:
-                shutil.copyfileobj(r.raw, f)
-            segment_file = Segment(segment_name, get_path_from_url(segment), r.reason, r.status_code)
-            session.add(segment_file)
-        else:
-            DEBUG('STATUS CODE: ', r.status_code)
+        try:
+			r = requests.get(make_full_url(segment, base_url), stream=True)
+			if r.status_code == 200:
+				dir = join(out_path, dirname(get_path_from_url(segment)))
+				filename = join(out_path, get_path_from_url(segment))
+				if not exists(dir):
+					makedirs(dir)
+				with open(filename, 'wb') as f:
+					shutil.copyfileobj(r.raw, f)
+				segment_file = Segment(segment_name, get_path_from_url(segment), r.reason, r.status_code)
+				session.add(segment_file)
+			else:
+				DEBUG('STATUS CODE: ', r.status_code)
+        except:
+			return
 
 
 
 def save_streams(streams, base_url, session, out_path):
     DEBUG('save streams: streams = {0}, outpath = {1}'.format(streams, out_path))
     for stream in streams:
-        r = requests.get(make_full_url(stream, base_url))
-        playlist_name = get_path_from_url(stream)
-        body = r.text
-        save_keys(body, session)
-        body = remove_sessions(body)
-        sp = session.query(SimplePlaylist).filter(SimplePlaylist.name == get_path_from_url(stream))\
-            .order_by(SimplePlaylist.date.desc()).first()
-        if sp and sp.body == body:
-            return
-        simple_pl = SimplePlaylist(playlist_name, body, r.reason, r.status_code)
-        session.add(simple_pl)
+        try:
+			r = requests.get(make_full_url(stream, base_url))
+			playlist_name = get_path_from_url(stream)
+			body = r.text
+			save_keys(body, session)
+			body = remove_sessions(body)
+			sp = session.query(SimplePlaylist).filter(SimplePlaylist.name == get_path_from_url(stream))\
+				.order_by(SimplePlaylist.date.desc()).first()
+			if sp and sp.body == body:
+				return
+			simple_pl = SimplePlaylist(playlist_name, body, r.reason, r.status_code)
+			session.add(simple_pl)
 
-        segments = get_streams(body)
-        save_segments(segments, base_url, session, out_path)
+			segments = get_streams(body)
+			save_segments(segments, base_url, session, out_path)
+        except:
+			return
 
 
 @setInterval(.5)
 def dump(url, output_folder):
     DEBUG('dump: url = {0}'.format(url))
-    r = requests.get(url)
-    session = DataBase.get_session()()
-    body = r.text
-    main_pl = MainPlaylist(remove_sessions(body), r.reason, r.status_code)
-    session.add(main_pl)
+    try:
+		r = requests.get(url)
+		session = DataBase.get_session()()
+		body = r.text
+		main_pl = MainPlaylist(remove_sessions(body), r.reason, r.status_code)
+		session.add(main_pl)
 
-    if is_playlist(body):
-        if is_variant(body):
-            streams = get_streams(body)
-            save_streams(streams, url, session, output_folder)
-        else:
-            save_streams([url], url, session, output_folder)
+		if is_playlist(body):
+			if is_variant(body):
+				streams = get_streams(body)
+				save_streams(streams, url, session, output_folder)
+			else:
+				save_streams([url], url, session, output_folder)
 
-    session.commit()
+		session.commit()
+    except:
+		return
 
 
 def record_session(url, output_folder, session_name):
