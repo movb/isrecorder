@@ -92,3 +92,16 @@ def playlist_replace_keys(playlist, base):
         else:
             lines.append(x)
     return '\n'.join(lines)
+
+def playlist_get_media_sequence(playlist):
+    lines = []
+
+    first = 0
+    count = 0
+    for x in playlist.splitlines():
+        if x.find('#EXT-X-MEDIA-SEQUENCE') == 0:
+            first = int(x[22:])
+        if x.find('#EXTINF') == 0:
+            count += 1
+
+    return first, count

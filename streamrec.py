@@ -9,6 +9,7 @@ from timer_decorator import setInterval
 from models import *
 from db import DB
 from m3u8 import *
+from static_vars import *
 import shutil
 from os import listdir, makedirs
 from os.path import isdir, join, dirname, exists
@@ -60,10 +61,10 @@ def save_segments(segments, base_url, session, out_path):
                     shutil.copyfileobj(r.raw, f)
                 segment_file = Segment(segment_name, get_path_from_url(segment), r.reason, r.status_code)
                 session.add(segment_file)
-			else:
-				DEBUG('STATUS CODE: ', r.status_code)
+            else:
+                DEBUG('STATUS CODE: ', r.status_code)
         except:
-			return
+            return
 
 
 
@@ -71,44 +72,33 @@ def save_streams(streams, base_url, session, out_path):
     DEBUG('save streams: streams = {0}, outpath = {1}'.format(streams, out_path))
     for stream in streams:
         try:
-			r = requests.get(make_full_url(stream, base_url))
-			playlist_name = get_path_from_url(stream)
-			body = r.text
-			save_keys(body, session)
-			body = remove_sessions(body)
-			sp = session.query(SimplePlaylist).filter(SimplePlaylist.name == get_path_from_url(stream))\
-				.order_by(SimplePlaylist.date.desc()).first()
-			if sp and sp.body == body:
-				return
-			simple_pl = SimplePlaylist(playlist_name, body, r.reason, r.status_code)
-			session.add(simple_pl)
+            r = requests.get(make_full_url(stream, base_url))
+            playlist_name = get_path_from_url(stream)
+            body = r.text
+            save_keys(body, session)
+            body = remove_sessions(body)
 
-			segments = get_streams(body)
-			save_segments(segments, base_url, session, out_path)
+            segments = get_streams(body)
+            save_segments(segments, base_url, session, out_path)
         except:
-			return
+            return
 
 
 @setInterval(.5)
 def dump(url, output_folder):
     DEBUG('dump: url = {0}'.format(url))
     try:
-		r = requests.get(url)
-		session = DataBase.get_session()()
-		body = r.text
-		main_pl = MainPlaylist(remove_sessions(body), r.reason, r.status_code)
-		session.add(main_pl)
+        r = requests.get(url)
+        body = r.text
 
-		if is_playlist(body):
-			if is_variant(body):
-				streams = get_streams(body)
-				save_streams(streams, url, session, output_folder)
-			else:
-				save_streams([url], url, session, output_folder)
-
-		session.commit()
+        if is_playlist(body):
+            if is_variant(body):
+                streams = get_streams(body)
+                save_streams(streams[-1:], url, output_folder)
+            else:
+                save_streams([url], url, output_folder)
     except:
-		return
+        return
 
 
 def record_stream(url, output_folder, session_name):
